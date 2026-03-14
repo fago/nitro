@@ -27,13 +27,17 @@ const edgeScripting = defineNitroPreset(
         hoistTransitiveImports: false,
       },
       external: (id: string) =>
-        id.startsWith("https://") || id.startsWith("node:") ||
-        id === "typescript" || id === "vue-component-meta",
+        id.startsWith("https://") || id.startsWith("node:"),
       plugins: [
         {
           // Rewrite bare Node builtins (e.g. "fs") to "node:fs" for Deno/Bunny compat
+          // Stub out heavy dev-only modules (typescript, vue-component-meta)
           name: "rollup-plugin-node-prefix",
           resolveId(id: string) {
+            // Stub dev-only modules with empty exports
+            if (id === "vue-component-meta" || id === "typescript") {
+              return { id: "\0stub:" + id, moduleSideEffects: false };
+            }
             id = id.replace("node:", "");
             if (builtinModules.includes(id)) {
               return {
@@ -41,6 +45,11 @@ const edgeScripting = defineNitroPreset(
                 moduleSideEffects: false,
                 external: true,
               };
+            }
+          },
+          load(id: string) {
+            if (id.startsWith("\0stub:")) {
+              return "export default {}; export const createChecker = () => ({});";
             }
           },
         },
