@@ -54,6 +54,7 @@ const edgeScripting = defineNitroPreset(
   {
     aliases: ["bunny"],
     name: "bunny-edge-scripting" as const,
+    url: import.meta.url,
   }
 );
 
